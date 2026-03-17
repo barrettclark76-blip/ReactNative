@@ -11,6 +11,7 @@ import { MainTabParamList, RootStackParamList } from './types';
 import { WaterScreen } from '../screens/WaterScreen';
 import { BibleReadingScreen } from '../screens/BibleReadingScreen';
 import { SleepScreen } from '../screens/SleepScreen';
+import { PhotoViewerScreen } from '../screens/PhotoViewerScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
@@ -34,10 +35,11 @@ export function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="DayDetail" component={DayDetailScreen} options={{ title: 'Day Detail' }} />
         <Stack.Screen
-          name="DayDetail"
-          component={DayDetailScreen}
-          options={{ title: 'Day Detail' }}
+          name="PhotoViewer"
+          component={PhotoViewerScreen}
+          options={{ title: 'Photo Viewer', presentation: 'fullScreenModal' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

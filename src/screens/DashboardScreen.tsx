@@ -26,6 +26,10 @@ export function DashboardScreen() {
         <Text>Bible reading: {summary.bibleMinutes} min</Text>
         <Text>Sleep score: {summary.sleepScore ?? '-'}</Text>
         <Text>Sleep duration: {summary.sleepDurationHours ?? '-'} hr</Text>
+        <Text>Progress photos: {summary.photosCount}</Text>
+        <Text style={summary.hasRequiredPhoto ? styles.good : styles.bad}>
+          Completion photo requirement: {summary.hasRequiredPhoto ? 'Met' : 'Missing (1 required)'}
+        </Text>
       </View>
     </ScreenContainer>
   );
@@ -46,5 +50,13 @@ const styles = StyleSheet.create({
     borderColor: '#dbeafe',
     padding: 12,
     gap: 4,
+  },
+  good: {
+    color: '#15803d',
+    fontWeight: '600',
+  },
+  bad: {
+    color: '#dc2626',
+    fontWeight: '600',
   },
 });

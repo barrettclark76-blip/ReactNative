@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   MainTabs: undefined;
   DayDetail: { date: string };
+  PhotoViewer: { date: string; photoId: string };
 };
 
 export type MainTabParamList = {
