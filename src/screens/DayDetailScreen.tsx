@@ -31,8 +31,9 @@ type DayDetailFormValues = z.infer<typeof dayDetailSchema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'DayDetail'>;
 
 export function DayDetailScreen({ route, navigation }: Props) {
-  const { addPhotoEntry, getPhotosForDate } = useMetrics();
+  const { addPhotoEntry, getPhotosForDate, getDailyComplianceForDate } = useMetrics();
   const photos = useMemo(() => getPhotosForDate(route.params.date), [getPhotosForDate, route.params.date]);
+  const compliance = useMemo(() => getDailyComplianceForDate(route.params.date), [getDailyComplianceForDate, route.params.date]);
 
   const { control, handleSubmit, formState } = useForm<DayDetailFormValues>({
     resolver: zodResolver(dayDetailSchema),
@@ -105,6 +106,15 @@ export function DayDetailScreen({ route, navigation }: Props) {
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Edit Day: {route.params.date}</Text>
+
+        <View style={styles.complianceCard}>
+          <Text style={styles.complianceTitle}>Day Compliance Status</Text>
+          <Text>Workout once/day: {compliance.workoutOncePerDay ? '✅' : '⬜'}</Text>
+          <Text>Diet goals met/day: {compliance.dietGoalsMetPerDay ? '✅' : '⬜'}</Text>
+          <Text>Read Bible/day: {compliance.readBiblePerDay ? '✅' : '⬜'}</Text>
+          <Text>Progress photo uploaded/day: {compliance.progressPhotoUploadedPerDay ? '✅' : '⬜'}</Text>
+          <Text>Sleep/recovery priority: {compliance.sleepRecoveryPriority}</Text>
+        </View>
 
         <Controller
           control={control}
@@ -235,5 +245,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     color: '#475569',
+  },
+  complianceCard: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    padding: 10,
+    gap: 3,
+  },
+  complianceTitle: {
+    fontWeight: '700',
+    marginBottom: 2,
   },
 });

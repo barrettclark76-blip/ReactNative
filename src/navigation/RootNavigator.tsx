@@ -12,6 +12,7 @@ import { WaterScreen } from '../screens/WaterScreen';
 import { BibleReadingScreen } from '../screens/BibleReadingScreen';
 import { SleepScreen } from '../screens/SleepScreen';
 import { PhotoViewerScreen } from '../screens/PhotoViewerScreen';
+import { BiometricsScreen } from '../screens/BiometricsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
@@ -25,6 +26,7 @@ function MainTabs() {
       <Tabs.Screen name="Water" component={WaterScreen} />
       <Tabs.Screen name="Bible" component={BibleReadingScreen} />
       <Tabs.Screen name="Sleep" component={SleepScreen} />
+      <Tabs.Screen name="Biometrics" component={BiometricsScreen} />
       <Tabs.Screen name="Calendar" component={CalendarScreen} />
     </Tabs.Navigator>
   );

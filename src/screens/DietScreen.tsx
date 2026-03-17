@@ -20,7 +20,7 @@ const dietSchema = z.object({
 type DietFormValues = z.infer<typeof dietSchema>;
 
 export function DietScreen() {
-  const { dietEntries, addDietEntry, updateDietEntry, deleteDietEntry, getDashboardSummaryForDate } = useMetrics();
+  const { dietEntries, addDietEntry, updateDietEntry, deleteDietEntry, getDashboardSummaryForDate, getDailyComplianceForDate } = useMetrics();
   const [editingId, setEditingId] = useState<string | null>(null);
   const today = dayjs().format('YYYY-MM-DD');
   const { control, handleSubmit, reset, formState } = useForm<DietFormValues>({
@@ -35,6 +35,7 @@ export function DietScreen() {
   });
 
   const totals = useMemo(() => getDashboardSummaryForDate(today), [getDashboardSummaryForDate, today, dietEntries]);
+  const compliance = useMemo(() => getDailyComplianceForDate(today), [getDailyComplianceForDate, today, dietEntries]);
 
   const onSubmit = (values: DietFormValues) => {
     if (editingId) {
@@ -68,12 +69,18 @@ export function DietScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Diet Entry</Text>
-      <Text style={styles.subtle}>Daily goal comparison updates immediately after save.</Text>
+      <Text style={styles.subtle}>Calories/macros vs goals and daily compliance status.</Text>
       <View style={styles.goalCard}>
         <Text>Calories: {totals.calories}/{NUTRITION_GOALS.calories}</Text>
         <Text>Protein: {totals.proteinGrams}g/{NUTRITION_GOALS.proteinGrams}g</Text>
         <Text>Carbs: {totals.carbsGrams}g/{NUTRITION_GOALS.carbsGrams}g</Text>
         <Text>Fat: {totals.fatGrams}g/{NUTRITION_GOALS.fatGrams}g</Text>
+      </View>
+
+      <View style={styles.goalCard}>
+        <Text style={compliance.dietGoalsMetPerDay ? styles.good : styles.bad}>
+          Diet goals met/day: {compliance.dietGoalsMetPerDay ? 'Yes' : 'No'}
+        </Text>
       </View>
 
       <EntryFormCard
@@ -127,4 +134,6 @@ const styles = StyleSheet.create({
   goalCard: { backgroundColor: '#e2e8f0', borderRadius: 10, padding: 10, gap: 2 },
   listItem: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#dbeafe', padding: 10, gap: 4 },
   listTitle: { fontWeight: '700' },
+  good: { color: '#15803d', fontWeight: '600' },
+  bad: { color: '#dc2626', fontWeight: '600' },
 });

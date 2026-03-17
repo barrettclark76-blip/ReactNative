@@ -14,6 +14,7 @@ export interface WorkoutMetricEntry {
   date: ISODateString;
   type: string;
   durationMinutes: number;
+  source?: 'manual' | 'imported';
   intensity: 'Low' | 'Moderate' | 'High';
   notes?: string;
 }

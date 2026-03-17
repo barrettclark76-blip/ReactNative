@@ -11,5 +11,6 @@ export type MainTabParamList = {
   Water: undefined;
   Bible: undefined;
   Sleep: undefined;
+  Biometrics: undefined;
   Calendar: undefined;
 };
