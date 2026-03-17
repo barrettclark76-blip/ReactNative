@@ -5,10 +5,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { WorkoutScreen } from '../screens/WorkoutScreen';
 import { DietScreen } from '../screens/DietScreen';
-import { BiometricsScreen } from '../screens/BiometricsScreen';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { DayDetailScreen } from '../screens/DayDetailScreen';
 import { MainTabParamList, RootStackParamList } from './types';
+import { WaterScreen } from '../screens/WaterScreen';
+import { BibleReadingScreen } from '../screens/BibleReadingScreen';
+import { SleepScreen } from '../screens/SleepScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
@@ -17,9 +19,11 @@ function MainTabs() {
   return (
     <Tabs.Navigator>
       <Tabs.Screen name="Dashboard" component={DashboardScreen} />
-      <Tabs.Screen name="Workout" component={WorkoutScreen} />
       <Tabs.Screen name="Diet" component={DietScreen} />
-      <Tabs.Screen name="Biometrics" component={BiometricsScreen} />
+      <Tabs.Screen name="Workout" component={WorkoutScreen} />
+      <Tabs.Screen name="Water" component={WaterScreen} />
+      <Tabs.Screen name="Bible" component={BibleReadingScreen} />
+      <Tabs.Screen name="Sleep" component={SleepScreen} />
       <Tabs.Screen name="Calendar" component={CalendarScreen} />
     </Tabs.Navigator>
   );
