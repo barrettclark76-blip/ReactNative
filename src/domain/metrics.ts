@@ -39,6 +39,15 @@ export interface SleepMetricEntry {
   notes?: string;
 }
 
+export interface PhotoMetricEntry {
+  id: string;
+  date: ISODateString;
+  uri: string;
+  timestamp: string;
+  width: number;
+  height: number;
+}
+
 export interface NutritionGoals {
   calories: number;
   proteinGrams: number;

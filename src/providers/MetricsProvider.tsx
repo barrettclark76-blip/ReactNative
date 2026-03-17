@@ -4,6 +4,7 @@ import {
   BibleReadingMetricEntry,
   DietMetricEntry,
   ISODateString,
+  PhotoMetricEntry,
   SleepMetricEntry,
   WaterMetricEntry,
   WorkoutMetricEntry,
@@ -19,6 +20,9 @@ interface DashboardSummary {
   bibleMinutes: number;
   sleepScore?: number;
   sleepDurationHours?: number;
+  photosCount: number;
+  hasRequiredPhoto: boolean;
+  dayCompleteEligible: boolean;
 }
 
 interface MetricsContextValue {
@@ -27,6 +31,7 @@ interface MetricsContextValue {
   waterEntries: WaterMetricEntry[];
   bibleEntries: BibleReadingMetricEntry[];
   sleepEntries: SleepMetricEntry[];
+  photoEntries: PhotoMetricEntry[];
   addDietEntry: (entry: Omit<DietMetricEntry, 'id'>) => void;
   updateDietEntry: (entry: DietMetricEntry) => void;
   deleteDietEntry: (id: string) => void;
@@ -42,6 +47,9 @@ interface MetricsContextValue {
   addSleepEntry: (entry: Omit<SleepMetricEntry, 'id'>) => void;
   updateSleepEntry: (entry: SleepMetricEntry) => void;
   deleteSleepEntry: (id: string) => void;
+  addPhotoEntry: (entry: Omit<PhotoMetricEntry, 'id'>) => void;
+  deletePhotoEntry: (id: string) => void;
+  getPhotosForDate: (date: ISODateString) => PhotoMetricEntry[];
   getDashboardSummaryForDate: (date: ISODateString) => DashboardSummary;
 }
 
@@ -57,6 +65,7 @@ export function MetricsProvider({ children }: PropsWithChildren) {
   const [waterEntries, setWaterEntries] = useState<WaterMetricEntry[]>([]);
   const [bibleEntries, setBibleEntries] = useState<BibleReadingMetricEntry[]>([]);
   const [sleepEntries, setSleepEntries] = useState<SleepMetricEntry[]>([]);
+  const [photoEntries, setPhotoEntries] = useState<PhotoMetricEntry[]>([]);
 
   const value = useMemo<MetricsContextValue>(
     () => ({
@@ -65,6 +74,7 @@ export function MetricsProvider({ children }: PropsWithChildren) {
       waterEntries,
       bibleEntries,
       sleepEntries,
+      photoEntries,
       addDietEntry: (entry) => setDietEntries((current) => [...current, { ...entry, id: createId() }]),
       updateDietEntry: (entry) =>
         setDietEntries((current) => current.map((item) => (item.id === entry.id ? entry : item))),
@@ -85,13 +95,18 @@ export function MetricsProvider({ children }: PropsWithChildren) {
       updateSleepEntry: (entry) =>
         setSleepEntries((current) => current.map((item) => (item.id === entry.id ? entry : item))),
       deleteSleepEntry: (id) => setSleepEntries((current) => current.filter((item) => item.id !== id)),
+      addPhotoEntry: (entry) => setPhotoEntries((current) => [...current, { ...entry, id: createId() }]),
+      deletePhotoEntry: (id) => setPhotoEntries((current) => current.filter((item) => item.id !== id)),
+      getPhotosForDate: (date) => photoEntries.filter((entry) => entry.date === date),
       getDashboardSummaryForDate: (date = today) => {
         const dietForDay = dietEntries.filter((entry) => entry.date === date);
         const workoutsForDay = workoutEntries.filter((entry) => entry.date === date);
         const waterForDay = waterEntries.filter((entry) => entry.date === date);
         const bibleForDay = bibleEntries.filter((entry) => entry.date === date);
         const sleepForDay = sleepEntries.filter((entry) => entry.date === date);
+        const photosForDay = photoEntries.filter((entry) => entry.date === date);
         const latestSleep = sleepForDay[sleepForDay.length - 1];
+        const hasRequiredPhoto = photosForDay.length > 0;
 
         return {
           calories: dietForDay.reduce((total, entry) => total + entry.calories, 0),
@@ -103,10 +118,13 @@ export function MetricsProvider({ children }: PropsWithChildren) {
           bibleMinutes: bibleForDay.reduce((total, entry) => total + entry.minutes, 0),
           sleepScore: latestSleep?.score,
           sleepDurationHours: latestSleep?.durationHours,
+          photosCount: photosForDay.length,
+          hasRequiredPhoto,
+          dayCompleteEligible: hasRequiredPhoto,
         };
       },
     }),
-    [bibleEntries, dietEntries, sleepEntries, waterEntries, workoutEntries],
+    [bibleEntries, dietEntries, photoEntries, sleepEntries, waterEntries, workoutEntries],
   );
 
   return <MetricsContext.Provider value={value}>{children}</MetricsContext.Provider>;
