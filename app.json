@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "FitApp",
+    "slug": "fitapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.fitapp"
+    },
+    "android": {
+      "package": "com.example.fitapp"
+    },
+    "plugins": ["expo-image-picker"]
+  }
+}
