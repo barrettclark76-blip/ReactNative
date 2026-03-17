@@ -4,6 +4,7 @@ import {
   BibleReadingMetricEntry,
   DietMetricEntry,
   ISODateString,
+  NUTRITION_GOALS,
   PhotoMetricEntry,
   SleepMetricEntry,
   WaterMetricEntry,
@@ -21,8 +22,32 @@ interface DashboardSummary {
   sleepScore?: number;
   sleepDurationHours?: number;
   photosCount: number;
-  hasRequiredPhoto: boolean;
+  workoutDoneToday: boolean;
+  dietGoalsMetToday: boolean;
+  bibleReadToday: boolean;
+  progressPhotoUploadedToday: boolean;
+  sleepRecoveryPriority: 'On Track' | 'Needs Attention';
+  completionCount: number;
+  totalChecks: number;
+  completionProgress: number;
   dayCompleteEligible: boolean;
+}
+
+interface DailyCompliance {
+  date: ISODateString;
+  workoutOncePerDay: boolean;
+  dietGoalsMetPerDay: boolean;
+  readBiblePerDay: boolean;
+  progressPhotoUploadedPerDay: boolean;
+  sleepRecoveryPriority: 'On Track' | 'Needs Attention';
+  hydrationOnTrack: boolean;
+  complete: boolean;
+  completionCount: number;
+  totalChecks: number;
+}
+
+interface CalendarDayStatus extends DailyCompliance {
+  inRange: boolean;
 }
 
 interface MetricsContextValue {
@@ -51,13 +76,17 @@ interface MetricsContextValue {
   deletePhotoEntry: (id: string) => void;
   getPhotosForDate: (date: ISODateString) => PhotoMetricEntry[];
   getDashboardSummaryForDate: (date: ISODateString) => DashboardSummary;
+  getDailyComplianceForDate: (date: ISODateString) => DailyCompliance;
+  getCalendarStatuses: () => CalendarDayStatus[];
 }
 
 const MetricsContext = createContext<MetricsContextValue | undefined>(undefined);
 
 const createId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
 const today = dayjs().format('YYYY-MM-DD');
+const WATER_GOAL_OZ = 128;
+const SLEEP_HOURS_TARGET = 7;
+const SLEEP_SCORE_TARGET = 70;
 
 export function MetricsProvider({ children }: PropsWithChildren) {
   const [dietEntries, setDietEntries] = useState<DietMetricEntry[]>([]);
@@ -66,6 +95,107 @@ export function MetricsProvider({ children }: PropsWithChildren) {
   const [bibleEntries, setBibleEntries] = useState<BibleReadingMetricEntry[]>([]);
   const [sleepEntries, setSleepEntries] = useState<SleepMetricEntry[]>([]);
   const [photoEntries, setPhotoEntries] = useState<PhotoMetricEntry[]>([]);
+
+  const getDailyComplianceForDate = (date: ISODateString): DailyCompliance => {
+    const dietForDay = dietEntries.filter((entry) => entry.date === date);
+    const workoutsForDay = workoutEntries.filter((entry) => entry.date === date);
+    const waterForDay = waterEntries.filter((entry) => entry.date === date);
+    const bibleForDay = bibleEntries.filter((entry) => entry.date === date);
+    const sleepForDay = sleepEntries.filter((entry) => entry.date === date);
+    const photosForDay = photoEntries.filter((entry) => entry.date === date);
+    const latestSleep = sleepForDay[sleepForDay.length - 1];
+
+    const calories = dietForDay.reduce((total, entry) => total + entry.calories, 0);
+    const protein = dietForDay.reduce((total, entry) => total + entry.proteinGrams, 0);
+    const carbs = dietForDay.reduce((total, entry) => total + entry.carbsGrams, 0);
+    const fat = dietForDay.reduce((total, entry) => total + entry.fatGrams, 0);
+    const water = waterForDay.reduce((total, entry) => total + entry.ounces, 0);
+
+    const workoutOncePerDay = workoutsForDay.length >= 1;
+    const dietGoalsMetPerDay =
+      calories <= NUTRITION_GOALS.calories &&
+      protein >= NUTRITION_GOALS.proteinGrams &&
+      carbs >= NUTRITION_GOALS.carbsGrams &&
+      fat >= NUTRITION_GOALS.fatGrams;
+    const readBiblePerDay = bibleForDay.reduce((total, entry) => total + entry.minutes, 0) > 0;
+    const progressPhotoUploadedPerDay = photosForDay.length > 0;
+    const hydrationOnTrack = water >= WATER_GOAL_OZ;
+    const sleepRecoveryPriority =
+      latestSleep && latestSleep.durationHours >= SLEEP_HOURS_TARGET && latestSleep.score >= SLEEP_SCORE_TARGET
+        ? 'On Track'
+        : 'Needs Attention';
+
+    const checks = [
+      workoutOncePerDay,
+      dietGoalsMetPerDay,
+      readBiblePerDay,
+      progressPhotoUploadedPerDay,
+      sleepRecoveryPriority === 'On Track',
+    ];
+    const completionCount = checks.filter(Boolean).length;
+
+    return {
+      date,
+      workoutOncePerDay,
+      dietGoalsMetPerDay,
+      readBiblePerDay,
+      progressPhotoUploadedPerDay,
+      sleepRecoveryPriority,
+      hydrationOnTrack,
+      complete: completionCount === checks.length,
+      completionCount,
+      totalChecks: checks.length,
+    };
+  };
+
+  const getDashboardSummaryForDate = (date: ISODateString = today): DashboardSummary => {
+    const compliance = getDailyComplianceForDate(date);
+    const dietForDay = dietEntries.filter((entry) => entry.date === date);
+    const workoutsForDay = workoutEntries.filter((entry) => entry.date === date);
+    const waterForDay = waterEntries.filter((entry) => entry.date === date);
+    const bibleForDay = bibleEntries.filter((entry) => entry.date === date);
+    const sleepForDay = sleepEntries.filter((entry) => entry.date === date);
+    const photosForDay = photoEntries.filter((entry) => entry.date === date);
+    const latestSleep = sleepForDay[sleepForDay.length - 1];
+
+    return {
+      calories: dietForDay.reduce((total, entry) => total + entry.calories, 0),
+      proteinGrams: dietForDay.reduce((total, entry) => total + entry.proteinGrams, 0),
+      carbsGrams: dietForDay.reduce((total, entry) => total + entry.carbsGrams, 0),
+      fatGrams: dietForDay.reduce((total, entry) => total + entry.fatGrams, 0),
+      workoutsCompleted: workoutsForDay.length,
+      waterOunces: waterForDay.reduce((total, entry) => total + entry.ounces, 0),
+      bibleMinutes: bibleForDay.reduce((total, entry) => total + entry.minutes, 0),
+      sleepScore: latestSleep?.score,
+      sleepDurationHours: latestSleep?.durationHours,
+      photosCount: photosForDay.length,
+      workoutDoneToday: compliance.workoutOncePerDay,
+      dietGoalsMetToday: compliance.dietGoalsMetPerDay,
+      bibleReadToday: compliance.readBiblePerDay,
+      progressPhotoUploadedToday: compliance.progressPhotoUploadedPerDay,
+      sleepRecoveryPriority: compliance.sleepRecoveryPriority,
+      completionCount: compliance.completionCount,
+      totalChecks: compliance.totalChecks,
+      completionProgress: compliance.completionCount / compliance.totalChecks,
+      dayCompleteEligible: compliance.complete,
+    };
+  };
+
+  const getCalendarStatuses = (): CalendarDayStatus[] => {
+    const start = dayjs().startOf('day').subtract(74, 'day');
+    const end = dayjs().startOf('day');
+
+    return Array.from({ length: 75 }, (_, idx) => {
+      const day = start.add(idx, 'day');
+      const date = day.format('YYYY-MM-DD');
+      const compliance = getDailyComplianceForDate(date);
+
+      return {
+        ...compliance,
+        inRange: day.isBefore(end) || day.isSame(end),
+      };
+    });
+  };
 
   const value = useMemo<MetricsContextValue>(
     () => ({
@@ -79,7 +209,11 @@ export function MetricsProvider({ children }: PropsWithChildren) {
       updateDietEntry: (entry) =>
         setDietEntries((current) => current.map((item) => (item.id === entry.id ? entry : item))),
       deleteDietEntry: (id) => setDietEntries((current) => current.filter((item) => item.id !== id)),
-      addWorkoutEntry: (entry) => setWorkoutEntries((current) => [...current, { ...entry, id: createId() }]),
+      addWorkoutEntry: (entry) =>
+        setWorkoutEntries((current) => [
+          ...current,
+          { ...entry, source: entry.source ?? 'manual', id: createId() },
+        ]),
       updateWorkoutEntry: (entry) =>
         setWorkoutEntries((current) => current.map((item) => (item.id === entry.id ? entry : item))),
       deleteWorkoutEntry: (id) => setWorkoutEntries((current) => current.filter((item) => item.id !== id)),
@@ -98,31 +232,9 @@ export function MetricsProvider({ children }: PropsWithChildren) {
       addPhotoEntry: (entry) => setPhotoEntries((current) => [...current, { ...entry, id: createId() }]),
       deletePhotoEntry: (id) => setPhotoEntries((current) => current.filter((item) => item.id !== id)),
       getPhotosForDate: (date) => photoEntries.filter((entry) => entry.date === date),
-      getDashboardSummaryForDate: (date = today) => {
-        const dietForDay = dietEntries.filter((entry) => entry.date === date);
-        const workoutsForDay = workoutEntries.filter((entry) => entry.date === date);
-        const waterForDay = waterEntries.filter((entry) => entry.date === date);
-        const bibleForDay = bibleEntries.filter((entry) => entry.date === date);
-        const sleepForDay = sleepEntries.filter((entry) => entry.date === date);
-        const photosForDay = photoEntries.filter((entry) => entry.date === date);
-        const latestSleep = sleepForDay[sleepForDay.length - 1];
-        const hasRequiredPhoto = photosForDay.length > 0;
-
-        return {
-          calories: dietForDay.reduce((total, entry) => total + entry.calories, 0),
-          proteinGrams: dietForDay.reduce((total, entry) => total + entry.proteinGrams, 0),
-          carbsGrams: dietForDay.reduce((total, entry) => total + entry.carbsGrams, 0),
-          fatGrams: dietForDay.reduce((total, entry) => total + entry.fatGrams, 0),
-          workoutsCompleted: workoutsForDay.length,
-          waterOunces: waterForDay.reduce((total, entry) => total + entry.ounces, 0),
-          bibleMinutes: bibleForDay.reduce((total, entry) => total + entry.minutes, 0),
-          sleepScore: latestSleep?.score,
-          sleepDurationHours: latestSleep?.durationHours,
-          photosCount: photosForDay.length,
-          hasRequiredPhoto,
-          dayCompleteEligible: hasRequiredPhoto,
-        };
-      },
+      getDashboardSummaryForDate,
+      getDailyComplianceForDate,
+      getCalendarStatuses,
     }),
     [bibleEntries, dietEntries, photoEntries, sleepEntries, waterEntries, workoutEntries],
   );
